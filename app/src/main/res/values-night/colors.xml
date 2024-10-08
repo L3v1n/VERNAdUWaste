@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="backgroundColor">#121212</color>
+    <color name="textColorPrimary">#FFFFFF</color>
+    <color name="textColorSecondary">#FFFFFF</color>
+    <color name="cardBackgroundColor">#388E3C</color>
+    <color name="fabBackgroundColor">#BB86FC</color>
+    <color name="iconColorPrimary">#FFFFFF</color>
+    <color name="iconColorSecondary">#FFFFFF</color>
+    <color name="cancelTextColor">#FF0000</color>
+    <color name="bottomBarColor">#222222</color>
+    <color name="buttonBackgroundColor">#388E3C</color>
+    <color name="imagePreviewBackgroundColor">#303030</color>
+</resources>
