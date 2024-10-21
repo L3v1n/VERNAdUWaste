@@ -1,20 +1,27 @@
 package com.vern.vernaduwaste;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.*;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.content.ContextCompat;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.Camera;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.content.ContextCompat;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -35,7 +42,6 @@ public class CameraActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
 
-        // Initialize UI elements
         previewView = findViewById(R.id.previewView);
         FloatingActionButton fabCapture = findViewById(R.id.fab_capture);
         ImageButton btnGallery = findViewById(R.id.btn_gallery);
@@ -45,27 +51,21 @@ public class CameraActivity extends AppCompatActivity {
         startCamera();
         cameraExecutor = Executors.newSingleThreadExecutor();
 
-        // Handle capture, gallery, and flash toggle actions
         fabCapture.setOnClickListener(v -> takePhoto());
         btnCancel.setOnClickListener(v -> finish());
         btnGallery.setOnClickListener(v -> openGallery());
         btnFlash.setOnClickListener(v -> toggleFlash());
     }
 
-    // Initialize camera with CameraX
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
                 ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                Preview preview = new Preview.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                        .build();
+                Preview preview = new Preview.Builder().build();
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-                imageCapture = new ImageCapture.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                        .build();
+                imageCapture = new ImageCapture.Builder().build();
 
                 CameraSelector cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
                 cameraProvider.unbindAll();
@@ -76,7 +76,6 @@ public class CameraActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    // Capture and save a photo
     private void takePhoto() {
         if (imageCapture == null) return;
 
@@ -87,9 +86,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                 runOnUiThread(() -> {
-                    Toast.makeText(CameraActivity.this, "Photo captured successfully!", Toast.LENGTH_SHORT).show();
                     if (isFlashOn) toggleFlash();
-
                     Intent intent = new Intent(CameraActivity.this, WasteActivity.class);
                     intent.putExtra("captured_image_path", photoFile.getAbsolutePath());
                     startActivity(intent);
@@ -103,35 +100,28 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    // Toggle the flash
     private void toggleFlash() {
         if (camera != null) {
             isFlashOn = !isFlashOn;
             camera.getCameraControl().enableTorch(isFlashOn);
-            runOnUiThread(() -> {
-                updateFlashIcon();
-                Toast.makeText(this, isFlashOn ? "Flash On" : "Flash Off", Toast.LENGTH_SHORT).show();
-            });
+            updateFlashIcon();
         } else {
             Toast.makeText(this, "Flash not available", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Update the flash icon
     private void updateFlashIcon() {
         ImageButton btnFlash = findViewById(R.id.btn_flash);
         int flashIcon = isFlashOn ? R.drawable.ic_flash_on : R.drawable.ic_flash_off;
         btnFlash.setImageDrawable(ContextCompat.getDrawable(this, flashIcon));
     }
 
-    // Open the gallery to select an image
     private void openGallery() {
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         galleryIntent.setType("image/*");
         openGalleryLauncher.launch(galleryIntent);
     }
 
-    // Handle result from gallery selection
     ActivityResultLauncher<Intent> openGalleryLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {

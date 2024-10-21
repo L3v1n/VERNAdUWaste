@@ -1,13 +1,12 @@
 package com.vern.vernaduwaste;
 
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.ViewTreeObserver;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,10 +25,9 @@ import java.nio.channels.FileChannel;
 
 public class WasteActivity extends AppCompatActivity {
 
-    private static final String TAG = "WasteActivity";
-    private String classificationResult = "Unknown";
-    private ImageView imageView;
     private Interpreter tflite;
+    private ImageView imageView;
+    private final String[] wasteTypes = {"Biodegradable", "Non-biodegradable", "Recyclable"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,17 +36,17 @@ public class WasteActivity extends AppCompatActivity {
 
         imageView = findViewById(R.id.captured_image_view);
         TextView resultTextView = findViewById(R.id.text_waste_type);
-        Button disposeButton = findViewById(R.id.btn_dispose);
-        Button goBackButton = findViewById(R.id.btn_go_back);
 
+        // Load TensorFlow Lite model
         try {
             tflite = new Interpreter(loadModelFile());
         } catch (IOException e) {
-            Log.e(TAG, "Error loading TensorFlow Lite model", e);
+            Log.e("WasteActivity", "Error loading TensorFlow Lite model", e);
             Toast.makeText(this, "Model loading failed!", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // Get image from intent and classify it
         String imagePath = getIntent().getStringExtra("captured_image_path");
         String selectedImageUri = getIntent().getStringExtra("selected_image_uri");
 
@@ -59,24 +57,20 @@ public class WasteActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "No image found!", Toast.LENGTH_SHORT).show();
         }
-
-        resultTextView.setText(classificationResult);
-        disposeButton.setOnClickListener(v -> Toast.makeText(WasteActivity.this, "Dispose clicked", Toast.LENGTH_SHORT).show());
-        goBackButton.setOnClickListener(v -> finish());
     }
 
-    // Load TensorFlow Lite model from assets
+    // Load the TensorFlow Lite model
     private MappedByteBuffer loadModelFile() throws IOException {
-        FileInputStream fileInputStream = new FileInputStream(getAssets().openFd("waste_classifier.tflite").getFileDescriptor());
-        FileChannel fileChannel = fileInputStream.getChannel();
-        long startOffset = getAssets().openFd("waste_classifier.tflite").getStartOffset();
-        long declaredLength = getAssets().openFd("waste_classifier.tflite").getDeclaredLength();
+        AssetFileDescriptor fileDescriptor = getAssets().openFd("waste_classifier.tflite");
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
+    // Classify the waste
     private void classifyWaste(Bitmap bitmap) {
-        if (tflite == null) return;
-
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
         TensorImage tensorImage = new TensorImage(org.tensorflow.lite.DataType.FLOAT32);
         tensorImage.load(resizedBitmap);
@@ -84,33 +78,23 @@ public class WasteActivity extends AppCompatActivity {
         TensorBuffer outputBuffer = TensorBuffer.createFixedSize(new int[]{1, 3}, org.tensorflow.lite.DataType.FLOAT32);
         tflite.run(tensorImage.getBuffer(), outputBuffer.getBuffer().rewind());
 
-        classificationResult = getWasteTypeFromOutput(outputBuffer.getFloatArray());
-        runOnUiThread(() -> {
-            TextView resultTextView = findViewById(R.id.text_waste_type);
-            resultTextView.setText(classificationResult);
-        });
+        String result = getWasteType(outputBuffer.getFloatArray());
+        runOnUiThread(() -> ((TextView) findViewById(R.id.text_waste_type)).setText(result));
     }
 
-    private String getWasteTypeFromOutput(float[] outputValues) {
-        int maxIndex = -1;
-        float maxConfidence = 0;
-        String[] wasteTypes = {"Biodegradable", "Non-biodegradable", "Recyclable"};
-
-        for (int i = 0; i < outputValues.length; i++) {
-            if (outputValues[i] > maxConfidence) {
-                maxConfidence = outputValues[i];
-                maxIndex = i;
-            }
+    private String getWasteType(float[] output) {
+        int maxIndex = 0;
+        for (int i = 1; i < output.length; i++) {
+            if (output[i] > output[maxIndex]) maxIndex = i;
         }
-
-        return maxIndex != -1 ? wasteTypes[maxIndex] : "Unknown";
+        return wasteTypes[maxIndex];
     }
 
     private void displayCapturedImage(String imagePath) {
         File imageFile = new File(imagePath);
         if (imageFile.exists()) {
             imageView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-                Bitmap bitmap = decodeSampledBitmapFromFile(imagePath, imageView.getWidth(), imageView.getHeight());
+                Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
                 Bitmap squareBitmap = cropToSquare(bitmap);
                 imageView.setImageBitmap(squareBitmap);
                 classifyWaste(squareBitmap);
@@ -118,15 +102,15 @@ public class WasteActivity extends AppCompatActivity {
         }
     }
 
-    private void displayGalleryImage(Uri selectedImageUri) {
+    private void displayGalleryImage(Uri imageUri) {
         imageView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), selectedImageUri);
+                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
                 Bitmap squareBitmap = cropToSquare(bitmap);
                 imageView.setImageBitmap(squareBitmap);
                 classifyWaste(squareBitmap);
-            } catch (Exception e) {
-                Log.e(TAG, "Error loading gallery image", e);
+            } catch (IOException e) {
+                Log.e("WasteActivity", "Error loading gallery image", e);
             }
         });
     }
@@ -139,28 +123,5 @@ public class WasteActivity extends AppCompatActivity {
         int cropW = (width - newWidth) / 2;
         int cropH = (height - newHeight) / 2;
         return Bitmap.createBitmap(bitmap, cropW, cropH, newWidth, newHeight);
-    }
-
-    public Bitmap decodeSampledBitmapFromFile(String filePath, int reqWidth, int reqHeight) {
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(filePath, options);
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-        options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(filePath, options);
-    }
-
-    public int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-        return inSampleSize;
     }
 }
