@@ -32,30 +32,28 @@ android {
     }
 
     buildFeatures {
-        viewBinding true // Enables view binding for easier access to views
+        viewBinding true
     }
 }
 
 dependencies {
-    // CameraX dependencies for camera functionality
     implementation 'androidx.camera:camera-core:1.3.4'
     implementation 'androidx.camera:camera-camera2:1.3.4'
     implementation 'androidx.camera:camera-lifecycle:1.3.4'
     implementation 'androidx.camera:camera-view:1.3.4'
 
-    // TensorFlow Lite dependencies for model inference
-    implementation 'org.tensorflow:tensorflow-lite:2.16.1' // Or the latest stable version
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.16.1' // GPU support for better performance
-    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1'
-    // Extra TensorFlow operations
-    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4' // TensorFlow Lite Support Library
+    implementation 'org.tensorflow:tensorflow-lite:2.16.1'
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.16.1'
+    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4'
 
-    // AppCompat and Material Design dependencies for UI
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.activity:activity:1.9.3'
+    implementation 'androidx.core:core:1.13.1'
 
-    // Test dependencies
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'

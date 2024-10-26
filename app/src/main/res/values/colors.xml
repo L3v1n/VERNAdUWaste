@@ -4,11 +4,20 @@
     <color name="textColorPrimary">#000000</color>
     <color name="textColorSecondary">#FFFFFF</color>
     <color name="cardBackgroundColor">#4CAF50</color>
-    <color name="fabBackgroundColor">#2196F3</color>
     <color name="iconColorPrimary">#000000</color>
     <color name="iconColorSecondary">#FFFFFF</color>
     <color name="cancelTextColor">#FF0000</color>
     <color name="bottomBarColor">#F5F5F5</color>
     <color name="buttonBackgroundColor">#4CAF50</color>
+    <color name="buttonPressedColor">#388E3C</color>
     <color name="imagePreviewBackgroundColor">#F0F0F0</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="borderColor">#FF000000</color>
+    <color name="mapBackgroundColor">#EDEDED</color>
+    <color name="backButtonBackgroundColor">#FFFFFF</color>
+    <color name="backButtonPressedColor">#D0D0D0</color>
+    <color name="spinnerBackgroundColor">#FFFFFF</color>
+    <color name="spinnerStrokeColor">#D0D0D0</color>
+    <color name="selectedIconColor">#4CAF50</color>
+    <color name="unselectedIconColor">#757575</color>
 </resources>

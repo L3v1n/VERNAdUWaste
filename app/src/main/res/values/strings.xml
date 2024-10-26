@@ -1,5 +1,24 @@
 <resources>
     <string name="app_name">VERN AdU Waste</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string-array name="floor_options">
+        <item>Ground Floor</item>
+        <item>2nd Floor</item>
+        <item>3rd Floor</item>
+    </string-array>
+    <string name="description_toggle_flash">Toggle Flash</string>
+    <string name="description_upload_from_gallery">Upload from Gallery</string>
+    <string name="description_capture_photo">Capture Photo</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="description_add_waste">Add new waste</string>
+    <string name="description_map_view">Interactive map of the building</string>
+    <string name="description_back_button">Go back to the previous screen</string>
+    <string name="description_captured_image">Captured image for classification</string>
+    <string name="label_this_waste_is">This waste is</string>
+    <string name="label_not_recognized">Not recognized</string>
+    <string name="btn_dispose">Dispose it</string>
+    <string name="btn_go_back">Go back</string>
+    <string name="greeting_text">Good day!</string>
+    <string name="disposed_wastes_label">Disposed wastes</string>
+    <string name="default_waste_count">0</string>
+    <string name="instruction_text">Keep on disposing trash properly to help save the environment!</string>
 </resources>

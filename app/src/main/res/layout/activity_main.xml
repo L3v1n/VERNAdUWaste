@@ -2,13 +2,11 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/backgroundColor"
-    tools:context=".MainActivity">
+    android:background="@color/backgroundColor">
 
-    <!-- Main content layout -->
+    <!-- Main content of the app -->
     <include
         android:id="@+id/main_content"
         layout="@layout/layout_main_content"
@@ -25,19 +23,20 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Floating action button for adding new items -->
+    <!-- Floating action button for adding new waste capture -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
         android:src="@drawable/ic_add"
-        app:maxImageSize="30dp"
-        app:fabCustomSize="72dp"
-        android:backgroundTint="@color/fabBackgroundColor"
-        android:elevation="8dp"
+        app:maxImageSize="40dp"
+        app:fabCustomSize="80dp"
+        android:backgroundTint="@color/buttonBackgroundColor"
+        android:contentDescription="@string/description_add_waste"
         android:layout_marginBottom="-32dp"
+        android:elevation="8dp"
+        app:tint="@color/iconColorSecondary"
         app:layout_constraintBottom_toTopOf="@id/navbar"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:tint="@color/iconColorSecondary" />
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

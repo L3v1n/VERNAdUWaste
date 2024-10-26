@@ -4,21 +4,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="16dp">
+    android:padding="18dp">
 
-    <!-- Greeting message -->
+    <!-- Greeting text view -->
     <TextView
         android:id="@+id/tv_greeting"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Good day!"
-        android:textSize="24sp"
+        android:text="@string/greeting_text"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="@color/textColorPrimary"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Card showing the disposed waste count -->
+    <!-- Card view showing disposed waste count -->
     <androidx.cardview.widget.CardView
         android:id="@+id/card_disposed_wastes"
         android:layout_width="match_parent"
@@ -36,34 +36,38 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Disposed wastes label -->
             <TextView
                 android:id="@+id/tv_disposed_wastes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Disposed wastes"
-                android:textSize="18sp"
+                android:text="@string/disposed_wastes_label"
+                android:textSize="24sp"
                 android:textColor="@color/textColorSecondary" />
 
+            <!-- Display count of disposed wastes -->
             <TextView
                 android:id="@+id/tv_waste_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
-                android:textSize="48sp"
+                android:text="@string/default_waste_count"
+                android:textSize="64sp"
                 android:textStyle="bold"
                 android:textColor="@color/textColorSecondary" />
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Instructional message -->
+    <!-- Instruction text for users -->
     <TextView
         android:id="@+id/tv_instruction"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Keep on disposing trash properly to help save the environment!"
+        android:layout_marginTop="8dp"
+        android:text="@string/instruction_text"
         android:textSize="16sp"
         android:textColor="@color/textColorPrimary"
         android:gravity="start"
         app:layout_constraintTop_toBottomOf="@id/card_disposed_wastes"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintWidth_percent="0.8" />
 </androidx.constraintlayout.widget.ConstraintLayout>

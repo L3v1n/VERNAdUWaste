@@ -2,38 +2,33 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/backgroundColor"
-    tools:context=".CameraActivity">
+    android:background="@color/backgroundColor">
 
-    <!-- Top bar with flash toggle button -->
+    <!-- Top bar containing the flash button -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:padding="8dp"
         android:background="@color/bottomBarColor"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
             android:id="@+id/btn_flash"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/ic_flash_off"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Toggle Flash"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/description_toggle_flash"
             app:tint="@color/iconColorPrimary"
-            android:layout_marginEnd="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Camera preview window -->
+    <!-- Camera preview -->
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="0dp"
@@ -42,29 +37,27 @@
         app:layout_constraintBottom_toTopOf="@id/bottom_controls"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintDimensionRatio="1:1" />
+        app:layout_constraintDimensionRatio="3:4" />
 
-    <!-- Bottom controls with gallery, capture, and cancel buttons -->
+    <!-- Bottom controls containing the capture button, gallery, and cancel button -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_controls"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/bottomBarColor"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <ImageButton
             android:id="@+id/btn_gallery"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_gallery"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Upload from Gallery"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/description_upload_from_gallery"
             app:tint="@color/iconColorPrimary"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="24dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
@@ -76,8 +69,8 @@
             android:src="@drawable/ic_camera"
             app:maxImageSize="40dp"
             app:fabCustomSize="80dp"
-            android:backgroundTint="@color/fabBackgroundColor"
-            android:contentDescription="Capture Photo"
+            android:backgroundTint="@color/buttonBackgroundColor"
+            android:contentDescription="@string/description_capture_photo"
             app:tint="@color/iconColorSecondary"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -88,20 +81,23 @@
             android:id="@+id/btn_cancel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel"
+            android:text="@string/btn_cancel"
             android:textColor="@color/cancelTextColor"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:layout_marginEnd="32dp"
+            android:background="@android:color/transparent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Flash overlay (invisible until used) -->
+    <!-- Shutter overlay to simulate camera flash effect -->
     <View
-        android:id="@+id/flash_overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#FFFFFF"
-        android:visibility="gone" />
+        android:id="@+id/shutter_overlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/black"
+        android:alpha="0"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

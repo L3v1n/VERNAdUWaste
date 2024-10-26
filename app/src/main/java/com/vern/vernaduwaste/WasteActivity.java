@@ -1,12 +1,12 @@
 package com.vern.vernaduwaste;
 
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,13 +20,12 @@ import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 
 public class WasteActivity extends AppCompatActivity {
-
     private Interpreter tflite;
-    private ImageView imageView;
     private final String[] wasteTypes = {"Biodegradable", "Non-biodegradable", "Recyclable"};
 
     @Override
@@ -34,43 +33,63 @@ public class WasteActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_waste);
 
-        imageView = findViewById(R.id.captured_image_view);
+        ImageView imageView = findViewById(R.id.captured_image_view);
         TextView resultTextView = findViewById(R.id.text_waste_type);
+        Button btnGoBack = findViewById(R.id.btn_go_back);
+        Button btnDispose = findViewById(R.id.btn_dispose);
 
-        // Load TensorFlow Lite model
+        // Set up the go-back button to return to CameraActivity
+        btnGoBack.setOnClickListener(v -> finish());
+
+        // Set up the button to navigate to the disposal map
+        btnDispose.setOnClickListener(v -> startActivity(new Intent(WasteActivity.this, NavigationMapActivity.class)));
+
+        // Initialize the TensorFlow Lite interpreter
         try {
             tflite = new Interpreter(loadModelFile());
         } catch (IOException e) {
-            Log.e("WasteActivity", "Error loading TensorFlow Lite model", e);
             Toast.makeText(this, "Model loading failed!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Get image from intent and classify it
+        // Retrieve and display the image either from the camera or the gallery
         String imagePath = getIntent().getStringExtra("captured_image_path");
         String selectedImageUri = getIntent().getStringExtra("selected_image_uri");
 
         if (imagePath != null) {
-            displayCapturedImage(imagePath);
+            displayImageAndClassify(imagePath, imageView, resultTextView);
         } else if (selectedImageUri != null) {
-            displayGalleryImage(Uri.parse(selectedImageUri));
+            displayImageFromUri(Uri.parse(selectedImageUri), imageView, resultTextView);
         } else {
             Toast.makeText(this, "No image found!", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Load the TensorFlow Lite model
+    /**
+     * Loads the TensorFlow Lite model from the assets folder.
+     *
+     * @return MappedByteBuffer of the model.
+     * @throws IOException If the model file cannot be loaded.
+     */
     private MappedByteBuffer loadModelFile() throws IOException {
-        AssetFileDescriptor fileDescriptor = getAssets().openFd("waste_classifier.tflite");
-        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+        try (AssetFileDescriptor fileDescriptor = getAssets().openFd("waste_classifier.tflite");
+             FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+             FileChannel fileChannel = inputStream.getChannel()) {
+
+            long startOffset = fileDescriptor.getStartOffset();
+            long declaredLength = fileDescriptor.getDeclaredLength();
+            return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+        }
     }
 
-    // Classify the waste
-    private void classifyWaste(Bitmap bitmap) {
+    /**
+     * Classifies the waste type using the TensorFlow Lite model.
+     *
+     * @param bitmap          The image bitmap to classify.
+     * @param resultTextView  The TextView to display the classification result.
+     */
+    private void classifyWaste(Bitmap bitmap, TextView resultTextView) {
+        // Preprocess the image to match the model input size
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
         TensorImage tensorImage = new TensorImage(org.tensorflow.lite.DataType.FLOAT32);
         tensorImage.load(resizedBitmap);
@@ -78,10 +97,16 @@ public class WasteActivity extends AppCompatActivity {
         TensorBuffer outputBuffer = TensorBuffer.createFixedSize(new int[]{1, 3}, org.tensorflow.lite.DataType.FLOAT32);
         tflite.run(tensorImage.getBuffer(), outputBuffer.getBuffer().rewind());
 
-        String result = getWasteType(outputBuffer.getFloatArray());
-        runOnUiThread(() -> ((TextView) findViewById(R.id.text_waste_type)).setText(result));
+        // Get the result from the model and display it
+        resultTextView.setText(getWasteType(outputBuffer.getFloatArray()));
     }
 
+    /**
+     * Determines the waste type from the model output.
+     *
+     * @param output The array of output probabilities.
+     * @return The waste type with the highest probability.
+     */
     private String getWasteType(float[] output) {
         int maxIndex = 0;
         for (int i = 1; i < output.length; i++) {
@@ -90,38 +115,38 @@ public class WasteActivity extends AppCompatActivity {
         return wasteTypes[maxIndex];
     }
 
-    private void displayCapturedImage(String imagePath) {
+    /**
+     * Displays the image captured from the camera and classifies it.
+     *
+     * @param imagePath The file path of the captured image.
+     * @param imageView The ImageView to display the image.
+     * @param resultTextView The TextView to display the classification result.
+     */
+    private void displayImageAndClassify(String imagePath, ImageView imageView, TextView resultTextView) {
         File imageFile = new File(imagePath);
         if (imageFile.exists()) {
-            imageView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-                Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-                Bitmap squareBitmap = cropToSquare(bitmap);
-                imageView.setImageBitmap(squareBitmap);
-                classifyWaste(squareBitmap);
-            });
+            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+            imageView.setImageBitmap(bitmap); // Directly set the bitmap
+            classifyWaste(bitmap, resultTextView);
         }
     }
 
-    private void displayGalleryImage(Uri imageUri) {
-        imageView.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            try {
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
-                Bitmap squareBitmap = cropToSquare(bitmap);
-                imageView.setImageBitmap(squareBitmap);
-                classifyWaste(squareBitmap);
-            } catch (IOException e) {
-                Log.e("WasteActivity", "Error loading gallery image", e);
+    /**
+     * Displays the image selected from the gallery and classifies it.
+     *
+     * @param uri The URI of the selected image.
+     * @param imageView The ImageView to display the image.
+     * @param resultTextView The TextView to display the classification result.
+     */
+    private void displayImageFromUri(Uri uri, ImageView imageView, TextView resultTextView) {
+        try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap != null) {
+                imageView.setImageBitmap(bitmap); // Directly set the bitmap
+                classifyWaste(bitmap, resultTextView);
             }
-        });
-    }
-
-    private Bitmap cropToSquare(Bitmap bitmap) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        int newWidth = Math.min(width, height);
-        int newHeight = Math.min(width, height);
-        int cropW = (width - newWidth) / 2;
-        int cropH = (height - newHeight) / 2;
-        return Bitmap.createBitmap(bitmap, cropW, cropH, newWidth, newHeight);
+        } catch (IOException e) {
+            Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+        }
     }
 }
