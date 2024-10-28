@@ -14,11 +14,12 @@
     <string name="description_back_button">Go back to the previous screen</string>
     <string name="description_captured_image">Captured image for classification</string>
     <string name="label_this_waste_is">This waste is</string>
-    <string name="label_not_recognized">Not recognized</string>
+    <string name="waste_label">"Not recognized"</string>
     <string name="btn_dispose">Dispose it</string>
     <string name="btn_go_back">Go back</string>
     <string name="greeting_text">Good day!</string>
     <string name="disposed_wastes_label">Disposed wastes</string>
     <string name="default_waste_count">0</string>
     <string name="instruction_text">Keep on disposing trash properly to help save the environment!</string>
+    <string name="description_app_icon">App Icon</string>
 </resources>
