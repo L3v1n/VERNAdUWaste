@@ -4,20 +4,20 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/backgroundColor">
+    android:background="#4CAF50">
 
-    <!-- Centered TextView for displaying the app name on the splash screen -->
-    <TextView
-        android:id="@+id/tv_Text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="VERN AdU Waste"
-        android:textAlignment="center"
-        android:textSize="30sp"
-        android:textStyle="bold"
-        android:textColor="@color/textColorPrimary"
+    <!-- ImageView for the app icon in the splash screen -->
+    <ImageView
+        android:id="@+id/app_icon"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_app_icon"
+        android:contentDescription="@string/description_app_icon"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:scaleType="centerInside" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -12,7 +12,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:adjustViewBounds="true"
-        android:scaleType="centerCrop"
+        android:scaleType="centerInside"
         android:background="@color/imagePreviewBackgroundColor"
         android:contentDescription="@string/description_captured_image"
         app:layout_constraintTop_toTopOf="parent"
@@ -39,8 +39,7 @@
         android:id="@+id/text_waste_type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/label_not_recognized"
+        android:text="@string/waste_label"
         android:textColor="@color/textColorPrimary"
         android:textSize="34sp"
         android:textStyle="bold"
@@ -67,12 +66,13 @@
         android:id="@+id/btn_go_back"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginBottom="24dp"
         android:text="@string/btn_go_back"
         android:textColor="@color/textColorPrimary"
         android:background="@android:color/transparent"
         app:layout_constraintTop_toBottomOf="@id/btn_dispose"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

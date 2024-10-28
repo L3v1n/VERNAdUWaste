@@ -27,6 +27,8 @@ import java.nio.channels.FileChannel;
 public class WasteActivity extends AppCompatActivity {
     private Interpreter tflite;
     private final String[] wasteTypes = {"Biodegradable", "Non-biodegradable", "Recyclable"};
+    private static final int MODEL_INPUT_SIZE = 224;
+    private static final float RECOGNITION_THRESHOLD = 0.6f;  // Set a probability threshold
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +46,7 @@ public class WasteActivity extends AppCompatActivity {
         // Set up the button to navigate to the disposal map
         btnDispose.setOnClickListener(v -> startActivity(new Intent(WasteActivity.this, NavigationMapActivity.class)));
 
-        // Initialize the TensorFlow Lite interpreter
+        // Initialize TensorFlow Lite interpreter
         try {
             tflite = new Interpreter(loadModelFile());
         } catch (IOException e) {
@@ -52,14 +54,14 @@ public class WasteActivity extends AppCompatActivity {
             return;
         }
 
-        // Retrieve and display the image either from the camera or the gallery
+        // Get the image path or URI and display/classify the image
         String imagePath = getIntent().getStringExtra("captured_image_path");
         String selectedImageUri = getIntent().getStringExtra("selected_image_uri");
 
         if (imagePath != null) {
-            displayImageAndClassify(imagePath, imageView, resultTextView);
+            displayAndClassifyImage(imagePath, imageView, resultTextView);
         } else if (selectedImageUri != null) {
-            displayImageFromUri(Uri.parse(selectedImageUri), imageView, resultTextView);
+            displayAndClassifyImage(Uri.parse(selectedImageUri), imageView, resultTextView);
         } else {
             Toast.makeText(this, "No image found!", Toast.LENGTH_SHORT).show();
         }
@@ -89,64 +91,81 @@ public class WasteActivity extends AppCompatActivity {
      * @param resultTextView  The TextView to display the classification result.
      */
     private void classifyWaste(Bitmap bitmap, TextView resultTextView) {
-        // Preprocess the image to match the model input size
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 224, 224, true);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, MODEL_INPUT_SIZE, MODEL_INPUT_SIZE, true);
         TensorImage tensorImage = new TensorImage(org.tensorflow.lite.DataType.FLOAT32);
         tensorImage.load(resizedBitmap);
 
-        TensorBuffer outputBuffer = TensorBuffer.createFixedSize(new int[]{1, 3}, org.tensorflow.lite.DataType.FLOAT32);
+        TensorBuffer outputBuffer = TensorBuffer.createFixedSize(new int[]{1, wasteTypes.length}, org.tensorflow.lite.DataType.FLOAT32);
         tflite.run(tensorImage.getBuffer(), outputBuffer.getBuffer().rewind());
 
-        // Get the result from the model and display it
-        resultTextView.setText(getWasteType(outputBuffer.getFloatArray()));
+        String classification = getWasteType(outputBuffer.getFloatArray());
+        resultTextView.setText(classification);
     }
 
     /**
-     * Determines the waste type from the model output.
+     * Gets the waste type with the highest probability or returns "Not recognized" if below threshold.
      *
      * @param output The array of output probabilities.
-     * @return The waste type with the highest probability.
+     * @return The waste type with the highest probability, or "Not recognized" if confidence is too low.
      */
     private String getWasteType(float[] output) {
         int maxIndex = 0;
         for (int i = 1; i < output.length; i++) {
             if (output[i] > output[maxIndex]) maxIndex = i;
         }
-        return wasteTypes[maxIndex];
-    }
 
-    /**
-     * Displays the image captured from the camera and classifies it.
-     *
-     * @param imagePath The file path of the captured image.
-     * @param imageView The ImageView to display the image.
-     * @param resultTextView The TextView to display the classification result.
-     */
-    private void displayImageAndClassify(String imagePath, ImageView imageView, TextView resultTextView) {
-        File imageFile = new File(imagePath);
-        if (imageFile.exists()) {
-            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-            imageView.setImageBitmap(bitmap); // Directly set the bitmap
-            classifyWaste(bitmap, resultTextView);
+        // Check if the highest probability meets the recognition threshold
+        if (output[maxIndex] >= RECOGNITION_THRESHOLD) {
+            return wasteTypes[maxIndex];
+        } else {
+            return "Not recognized";
         }
     }
 
     /**
-     * Displays the image selected from the gallery and classifies it.
+     * Displays and classifies an image from the file path.
      *
-     * @param uri The URI of the selected image.
-     * @param imageView The ImageView to display the image.
-     * @param resultTextView The TextView to display the classification result.
+     * @param imagePath       The file path of the image.
+     * @param imageView       The ImageView to display the image.
+     * @param resultTextView  The TextView to display the classification result.
      */
-    private void displayImageFromUri(Uri uri, ImageView imageView, TextView resultTextView) {
+    private void displayAndClassifyImage(String imagePath, ImageView imageView, TextView resultTextView) {
+        File imageFile = new File(imagePath);
+        if (imageFile.exists()) {
+            Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
+            imageView.setImageBitmap(bitmap);
+            classifyWaste(bitmap, resultTextView);
+        } else {
+            Toast.makeText(this, "Image file not found!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Displays and classifies an image from the URI.
+     *
+     * @param uri             The URI of the image.
+     * @param imageView       The ImageView to display the image.
+     * @param resultTextView  The TextView to display the classification result.
+     */
+    private void displayAndClassifyImage(Uri uri, ImageView imageView, TextView resultTextView) {
         try (InputStream inputStream = getContentResolver().openInputStream(uri)) {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             if (bitmap != null) {
-                imageView.setImageBitmap(bitmap); // Directly set the bitmap
+                imageView.setImageBitmap(bitmap);
                 classifyWaste(bitmap, resultTextView);
+            } else {
+                Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
             }
         } catch (IOException e) {
-            Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (tflite != null) {
+            tflite.close();
         }
     }
 }
