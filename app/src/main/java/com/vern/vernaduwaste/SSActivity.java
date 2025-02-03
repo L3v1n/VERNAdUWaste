@@ -7,15 +7,23 @@ import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class SSActivity extends AppCompatActivity {
+    private static final String TAG = "SSActivity";
+
+    private NetworkStateManager networkStateManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ss);
 
-        // Show the splash screen for 1 second before navigating to MainActivity
+        // Initialize the NetworkStateManager singleton
+        networkStateManager = NetworkStateManager.getInstance(this);
+
+        // Proceed to MainActivity after a delay
         new Handler().postDelayed(() -> {
-            startActivity(new Intent(SSActivity.this, MainActivity.class));
+            Intent intent = new Intent(SSActivity.this, MainActivity.class);
+            startActivity(intent);
             finish();
-        }, 1000);
+        }, 1000); // Delay for splash screen duration
     }
 }

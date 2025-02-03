@@ -14,7 +14,7 @@
     <string name="description_back_button">Go back to the previous screen</string>
     <string name="description_captured_image">Captured image for classification</string>
     <string name="label_this_waste_is">This waste is</string>
-    <string name="waste_label">"Not recognized"</string>
+    <string name="waste_label">"Waste type"</string>
     <string name="btn_dispose">Dispose it</string>
     <string name="btn_go_back">Go back</string>
     <string name="greeting_text">Good day!</string>
@@ -22,4 +22,39 @@
     <string name="default_waste_count">0</string>
     <string name="instruction_text">Keep on disposing trash properly to help save the environment!</string>
     <string name="description_app_icon">App Icon</string>
+    <string name="distance_not_available">Distance not available</string>
+    <string name="distance_to_wifi">Distance to Wi-Fi board: %1$.2f meters</string>
+    <string name="error_retrieving_rssi">Failed to retrieve RSSI from ESP8266.</string>
+    <string name="error_calculating_distance">Error in calculating Wi-Fi distance.</string>
+    <string name="btn_bin">Dispose here</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="description_success_icon">Success Icon</string>
+    <string name="waste_disposed_successfully">Waste successfully disposed of!</string>
+    <string name="return_to_home">Return to Home</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+    <string name="about_title">About</string>
+    <string name="about_summary">Learn more about this app</string>
+    <string name="about_header">VERN AdU Waste</string>
+    <string name="about_description">This application helps classify waste and navigate to the nearest bin for proper disposal.</string>
+    <string name="about_created_by">Created by VERN:</string>
+    <string name="team_member_vince">Vince Gayatgay</string>
+    <string name="team_member_elvin">Elvin Cervania</string>
+    <string name="team_member_reynor">Reynor Carreon</string>
+    <string name="team_member_norjan">Norjan Selim</string>
+    <string name="about_footer">Adamson University 2024</string>
 </resources>

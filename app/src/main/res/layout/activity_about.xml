@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- App Name Header -->
+    <TextView
+        android:id="@+id/about_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_header"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal" />
+
+    <!-- App Description -->
+    <TextView
+        android:id="@+id/about_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/about_description"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp" />
+
+    <!-- Created By Section -->
+    <TextView
+        android:id="@+id/about_created_by"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/about_created_by"
+        android:paddingBottom="8dp" />
+
+    <!-- Team Members -->
+    <TextView
+        android:id="@+id/team_member_vince"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/team_member_vince"
+        android:paddingBottom="4dp" />
+
+    <TextView
+        android:id="@+id/team_member_elvin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/team_member_elvin"
+        android:paddingBottom="4dp" />
+
+    <TextView
+        android:id="@+id/team_member_reynor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/team_member_reynor"
+        android:paddingBottom="4dp" />
+
+    <TextView
+        android:id="@+id/team_member_norjan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/team_member_norjan"
+        android:paddingBottom="16dp" />
+
+    <!-- Footer -->
+    <TextView
+        android:id="@+id/about_footer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/about_footer"
+        android:gravity="center" />
+
+    <!-- Back Button -->
+    <Button
+        android:id="@+id/back_button"
+        android:layout_width="210dp"
+        android:layout_height="70dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="32dp"
+        android:backgroundTint="@color/button1BackgroundColor"
+        android:text="@string/btn_go_back"
+        android:textColor="@color/textColorSecondary"
+        app:cornerRadius="50dp"/>
+</LinearLayout>

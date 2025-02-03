@@ -2,11 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/backgroundColor">
 
-    <!-- Top bar containing the flash button -->
+    <!-- Top bar -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/top_bar"
         android:layout_width="match_parent"
@@ -39,7 +40,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintDimensionRatio="3:4" />
 
-    <!-- Bottom controls containing the capture button, gallery, and cancel button -->
+    <!-- Focus indicator -->
+    <ImageView
+        android:id="@+id/focus_indicator"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:visibility="invisible"
+        android:src="@drawable/ic_focus_ring"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Bottom controls -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/bottom_controls"
         android:layout_width="match_parent"
@@ -69,7 +80,7 @@
             android:src="@drawable/ic_camera"
             app:maxImageSize="40dp"
             app:fabCustomSize="80dp"
-            android:backgroundTint="@color/buttonBackgroundColor"
+            android:backgroundTint="@color/button1BackgroundColor"
             android:contentDescription="@string/description_capture_photo"
             app:tint="@color/iconColorSecondary"
             app:layout_constraintStart_toStartOf="parent"
@@ -89,7 +100,7 @@
             app:layout_constraintBottom_toBottomOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <!-- Shutter overlay to simulate camera flash effect -->
+    <!-- Shutter overlay for flash effect (optional) -->
     <View
         android:id="@+id/shutter_overlay"
         android:layout_width="0dp"

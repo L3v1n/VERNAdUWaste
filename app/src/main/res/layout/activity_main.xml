@@ -31,7 +31,7 @@
         android:src="@drawable/ic_add"
         app:maxImageSize="40dp"
         app:fabCustomSize="80dp"
-        android:backgroundTint="@color/buttonBackgroundColor"
+        android:backgroundTint="@color/button1BackgroundColor"
         android:contentDescription="@string/description_add_waste"
         android:layout_marginBottom="-32dp"
         android:elevation="8dp"

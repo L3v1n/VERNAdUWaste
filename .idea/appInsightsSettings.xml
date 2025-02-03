@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.vern.vernaduwaste" />
+                  <option name="mobileSdkAppId" value="1:870144699525:android:2ff66c45a9d1526fb38dec" />
+                  <option name="projectId" value="vern-adu-waste" />
+                  <option name="projectNumber" value="870144699525" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

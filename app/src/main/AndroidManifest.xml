@@ -1,61 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:tools="http://schemas.android.com/tools"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <!-- Required feature declaration for the camera with flexibility to support devices without cameras -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
-    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
-
-    <!-- Permissions for accessing the camera and specific media files -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.flash"
+        android:required="false" /> <!-- Permissions for accessing the camera and flashlight -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.FLASHLIGHT" />
-
-    <!-- Specific permissions for accessing media on Android 13+ -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
-        tools:ignore="SelectedPhotoAccess" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" /> <!-- Permissions for accessing media files on devices running Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
-        tools:ignore="SelectedPhotoAccess" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" /> <!-- Required permissions for location, Wi-Fi access, and sensors -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> <!-- Permission for compass sensor -->
+    <uses-permission android:name="android.permission.BODY_SENSORS" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VERNAdUWaste"
-        android:screenOrientation="portrait"
+        android:usesCleartextTraffic="true"
         tools:ignore="DiscouragedApi">
-
-        <!-- Main activity for the splash screen -->
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false" />
+        <activity
+            android:name=".WasteDisposalSuccessActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/title_activity_settings" /> <!-- Main activity for the splash screen -->
         <activity
             android:name=".SSActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Main application activity -->
+        </activity> <!-- Main application activity -->
         <activity
             android:name=".MainActivity"
             android:exported="false"
-            android:launchMode="singleTask" />
-
-        <!-- Camera activity for capturing images -->
+            android:launchMode="singleTask" /> <!-- Camera activity for capturing images -->
         <activity
             android:name=".CameraActivity"
-            android:exported="false" />
-
-        <!-- Activity for displaying waste classification and disposal options -->
+            android:exported="false" /> <!-- Activity for displaying waste classification and disposal options -->
         <activity
             android:name=".WasteActivity"
-            android:exported="false" />
-
-        <!-- Navigation activity for showing the waste bin map -->
+            android:exported="false" /> <!-- Navigation activity for showing the waste bin map with Wi-Fi position tracking -->
         <activity
             android:name=".NavigationMapActivity"
             android:exported="false" />
     </application>
+
 </manifest>

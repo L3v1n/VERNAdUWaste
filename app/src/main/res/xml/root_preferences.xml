@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreferenceCompat
+        android:key="offline_mode"
+        android:title="Offline Mode"
+        android:summaryOff="App is online"
+        android:summaryOn="App is in offline mode" />
+
+    <Preference
+        android:key="about"
+        android:title="@string/about_title"
+        android:summary="@string/about_summary" />
+</PreferenceScreen>

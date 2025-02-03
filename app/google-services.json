@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "870144699525",
+    "firebase_url": "https://vern-adu-waste-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "vern-adu-waste",
+    "storage_bucket": "vern-adu-waste.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870144699525:android:2ff66c45a9d1526fb38dec",
+        "android_client_info": {
+          "package_name": "com.vern.vernaduwaste"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBSI3o0jobvmBdnyng2p7UfreUVcfyXcuU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

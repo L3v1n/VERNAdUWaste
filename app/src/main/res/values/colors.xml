@@ -8,16 +8,18 @@
     <color name="iconColorSecondary">#FFFFFF</color>
     <color name="cancelTextColor">#FF0000</color>
     <color name="bottomBarColor">#F5F5F5</color>
-    <color name="buttonBackgroundColor">#4CAF50</color>
-    <color name="buttonPressedColor">#388E3C</color>
+    <color name="button1BackgroundColor">#4CAF50</color>
+    <color name="button1PressedColor">#388E3C</color>
     <color name="imagePreviewBackgroundColor">#F0F0F0</color>
     <color name="colorAccent">#FF4081</color>
     <color name="borderColor">#FF000000</color>
     <color name="mapBackgroundColor">#EDEDED</color>
-    <color name="backButtonBackgroundColor">#FFFFFF</color>
-    <color name="backButtonPressedColor">#D0D0D0</color>
+    <color name="Button2BackgroundColor">#FFFFFF</color>
+    <color name="Button2PressedColor">#D0D0D0</color>
     <color name="spinnerBackgroundColor">#FFFFFF</color>
     <color name="spinnerStrokeColor">#D0D0D0</color>
-    <color name="selectedIconColor">#4CAF50</color>
+    <color name="selectedIconColor">#388E3C</color>
     <color name="unselectedIconColor">#757575</color>
+    <color name="ButtonEnabled">#4CAF50</color>
+    <color name="ButtonDisabled">#FFBDBDBD</color>
 </resources>
