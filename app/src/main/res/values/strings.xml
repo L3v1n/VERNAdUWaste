@@ -29,7 +29,7 @@
     <string name="btn_bin">Dispose here</string>
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="description_success_icon">Success Icon</string>
-    <string name="waste_disposed_successfully">Waste successfully disposed of!</string>
+    <string name="waste_disposed_successfully">Waste successfully disposed!</string>
     <string name="return_to_home">Return to Home</string>
 
     <!-- Preference Titles -->

@@ -14,7 +14,7 @@
     <color name="colorAccent">#FF4081</color>
     <color name="borderColor">#FFFFFFFF</color>
     <color name="mapBackgroundColor">#303030</color>
-    <color name="Button2BackgroundColor">#424242</color>
+    <color name="Button2BackgroundColor">#000000</color>
     <color name="Button2PressedColor">#606060</color>
     <color name="spinnerBackgroundColor">#424242</color>
     <color name="spinnerStrokeColor">#707070</color>

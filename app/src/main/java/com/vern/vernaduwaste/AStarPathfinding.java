@@ -19,30 +19,27 @@ public class AStarPathfinding {
             {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}
     };
 
-    // Checks if (x, y) is within the bounds of the grid.
     public boolean isInBounds(int[][] grid, int x, int y) {
         return x >= 0 && y >= 0 && y < grid.length && x < grid[0].length;
     }
 
-    // Checks if the cell at (x, y) is walkable. Walkable cells are 0 and stairs (2).
+    // Walkable if cell is 0 (walkable) or 2 (stairs)
     public boolean isWalkable(int[][] grid, int x, int y) {
         int cell = grid[y][x];
         return cell == 0 || cell == 2;
     }
 
-    // Computes the Manhattan distance between two points.
     public double manhattanDistance(int x1, int y1, int x2, int y2) {
         return Math.abs(x1 - x2) + Math.abs(y1 - y2);
     }
 
     // Standard A* algorithm for a single floor.
     public AStarResult aStar(int[][] grid, int startX, int startY, int goalX, int goalY) {
-        if (!isInBounds(grid, startX, startY) || !isInBounds(grid, goalX, goalY)) {
+        if (!isInBounds(grid, startX, startY) || !isInBounds(grid, goalX, goalY))
             return new AStarResult(null, 0);
-        }
-        if (!isWalkable(grid, startX, startY) || !isWalkable(grid, goalX, goalY)) {
+        if (!isWalkable(grid, startX, startY) || !isWalkable(grid, goalX, goalY))
             return new AStarResult(null, 0);
-        }
+
         PriorityQueue<Node> openSet = new PriorityQueue<>();
         Map<String, Node> allNodes = new HashMap<>();
         int exploredCount = 0;
@@ -61,7 +58,7 @@ public class AStarPathfinding {
                 int nx = current.x + dir[0];
                 int ny = current.y + dir[1];
                 if (isInBounds(grid, nx, ny) && isWalkable(grid, nx, ny)) {
-                    double tentativeG = current.gCost + 1; // Uniform cost
+                    double tentativeG = current.gCost + 1; // uniform cost
                     String key = getKey(nx, ny);
                     Node neighbor = allNodes.get(key);
                     if (neighbor == null) {
@@ -83,12 +80,12 @@ public class AStarPathfinding {
         return new AStarResult(null, exploredCount);
     }
 
-    // Helper to generate a unique key for a cell (ignoring floor for same-floor searches).
+    // Generates a unique key for (x,y).
     private String getKey(int x, int y) {
         return x + "," + y;
     }
 
-    // Reconstructs the path from the goal node back to the start.
+    // Reconstructs path from goal to start.
     public List<Node> reconstructPath(Node node) {
         List<Node> path = new ArrayList<>();
         while (node != null) {
@@ -100,58 +97,52 @@ public class AStarPathfinding {
         return path;
     }
 
-    // Finds the nearest stair on a given floor from point (x, y) using a provided list of stairs.
+    // Extracts stair positions from the grid. In our maps, cell value 2 indicates stairs.
+    public List<int[]> getStairsFromGrid(int[][] grid) {
+        List<int[]> stairs = new ArrayList<>();
+        for (int y = 0; y < grid.length; y++) {
+            for (int x = 0; x < grid[0].length; x++) {
+                if (grid[y][x] == 2) {
+                    stairs.add(new int[]{x, y});
+                }
+            }
+        }
+        return stairs;
+    }
+
+    // Finds the nearest stair in the provided list from (x, y)
     public int[] findNearestStair(int floor, int[][] grid, int x, int y, List<int[]> stairsList) {
         if (stairsList == null || stairsList.isEmpty()) return null;
         double minDistance = Double.MAX_VALUE;
-        int[] nearest = null;
+        int[] nearestStair = null;
         for (int[] stair : stairsList) {
             double d = manhattanDistance(x, y, stair[0], stair[1]);
             if (d < minDistance) {
                 minDistance = d;
-                nearest = stair;
+                nearestStair = stair;
             }
         }
-        return nearest;
+        return nearestStair;
     }
 
-    /**
-     * Multi-floor pathfinding (simple version) that mirrors the Python algorithm:
-     * If on the same floor, performs a standard A* search.
-     * If on different floors, finds the nearest stair on the start floor and checks that the same stair exists on the goal floor.
-     * Then it computes two A* searches (start-to-stair and stair-to-goal) and combines the results.
-     *
-     * @param floorGrids Map of floor number to its grid.
-     * @param stairsMap  Map of floor number to a list of stair coordinates.
-     * @param startFloor Starting floor number.
-     * @param startX     Starting x coordinate.
-     * @param startY     Starting y coordinate.
-     * @param goalFloor  Goal floor number.
-     * @param goalX      Goal x coordinate.
-     * @param goalY      Goal y coordinate.
-     * @return A PathResult containing the combined path, total explored node count, and the stair node used, or null if no path is found.
-     */
+    // Multi-floor pathfinding: if on the same floor, standard A*; otherwise, compute two segments.
     public PathResult findPathAcrossFloorsSimple(
             Map<Integer, int[][]> floorGrids,
-            Map<Integer, List<int[]>> stairsMap,
             int startFloor, int startX, int startY,
             int goalFloor, int goalX, int goalY) {
-
         if (startFloor == goalFloor) {
             AStarResult result = aStar(floorGrids.get(startFloor), startX, startY, goalX, goalY);
             return new PathResult(result.path, result.exploredCount, null, null);
         }
-
-        // Find the nearest stair on the start floor.
-        List<int[]> startStairs = stairsMap.get(startFloor);
+        // For start floor, extract stairs from the grid.
+        List<int[]> startStairs = getStairsFromGrid(floorGrids.get(startFloor));
         int[] startStair = findNearestStair(startFloor, floorGrids.get(startFloor), startX, startY, startStairs);
         if (startStair == null) {
-            Log.d(TAG, "No stair found on start floor " + startFloor);
+            Log.d(TAG, "No stairs found on start floor " + startFloor);
             return new PathResult(null, 0, null, null);
         }
-
-        // Verify that this stair exists on the goal floor.
-        List<int[]> goalStairs = stairsMap.get(goalFloor);
+        // For goal floor, extract stairs and verify that the same stair exists.
+        List<int[]> goalStairs = getStairsFromGrid(floorGrids.get(goalFloor));
         boolean stairExists = false;
         for (int[] stair : goalStairs) {
             if (stair[0] == startStair[0] && stair[1] == startStair[1]) {
@@ -160,37 +151,33 @@ public class AStarPathfinding {
             }
         }
         if (!stairExists) {
-            Log.d(TAG, "Stair at (" + startStair[0] + "," + startStair[1] + ") does not exist on goal floor " + goalFloor);
+            Log.d(TAG, "Stair at (" + startStair[0] + "," + startStair[1] + ") not found on goal floor " + goalFloor);
             return new PathResult(null, 0, null, null);
         }
-
-        // Compute the path on the start floor from the start point to the stair.
+        // Compute path on the start floor from start point to stair.
         AStarResult pathToStair = aStar(floorGrids.get(startFloor), startX, startY, startStair[0], startStair[1]);
         if (pathToStair.path == null) {
             Log.d(TAG, "No path to stair on start floor.");
             return new PathResult(null, 0, null, null);
         }
-
-        // Compute the path on the goal floor from the stair to the goal.
+        // Compute path on the goal floor from stair to goal.
         AStarResult pathFromStair = aStar(floorGrids.get(goalFloor), startStair[0], startStair[1], goalX, goalY);
         if (pathFromStair.path == null) {
             Log.d(TAG, "No path from stair to goal on goal floor.");
             return new PathResult(null, 0, null, null);
         }
-
-        // Combine the two paths (avoiding a duplicate stair node).
+        // Combine paths, avoiding duplicate stair coordinate.
         List<Node> totalPath = new ArrayList<>(pathToStair.path);
-        if (!totalPath.isEmpty()) {
+        if (!totalPath.isEmpty())
             totalPath.remove(totalPath.size() - 1);
-        }
         totalPath.addAll(pathFromStair.path);
         int totalExplored = pathToStair.exploredCount + pathFromStair.exploredCount;
         Log.d(TAG, "Multi-floor path found with total nodes: " + totalPath.size());
-        Node stairNode = new Node(startStair[0], startStair[1], startFloor, 0, 0); // Dummy stair node
+        Node stairNode = new Node(startStair[0], startStair[1], startFloor, 0, 0); // dummy stair node
         return new PathResult(totalPath, totalExplored, stairNode, stairNode);
     }
 
-    // Node class representing a point on the grid (including its floor)
+    // Node class
     public static class Node implements Comparable<Node> {
         int x, y, floor;
         double gCost, hCost, fCost;
@@ -224,7 +211,7 @@ public class AStarPathfinding {
         }
     }
 
-    // Class to hold the result of a same-floor A* search.
+    // A* search result for a single floor.
     public static class AStarResult {
         public List<Node> path;
         public int exploredCount;
@@ -235,7 +222,7 @@ public class AStarPathfinding {
         }
     }
 
-    // Class to hold the multi-floor path result (mirroring the Python function).
+    // Multi-floor path result.
     public static class PathResult {
         public List<Node> path;
         public int exploredCount;
