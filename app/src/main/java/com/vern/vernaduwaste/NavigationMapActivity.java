@@ -59,7 +59,6 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
     private ProgressBar loadingSpinner;
     private Spinner floorSpinner;
     private ImageButton btnBack;
-
     private LinearLayout modalBox;
     private Button btnBin;
     private Button btnGoBack;
@@ -73,13 +72,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
     private boolean isInitialAltitudeSet = false;
     // Floor maps loaded from assets (JSON files)
     private final Map<Integer, int[][]> floorMaps = new HashMap<>();
-    // Map of floor number to list of stairs (used for inter-floor transitions)
-    private final Map<Integer, List<int[]>> stairsMap = new HashMap<>();
-
-    private int[][] mapGrid;
     // Instance of AStarPathfinding for computing paths
     private final AStarPathfinding pathfinder = new AStarPathfinding();
-    private FirebaseHelper.WifiPosition board2;
+
+    private int[][] mapGrid;
     private final SensorEventListener sensorEventListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
@@ -104,16 +100,19 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                 }
             }
         }
+
         @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        }
     };
+    private FirebaseHelper.WifiPosition board2;
+    private int currentFloor = 1; // default floor
     private int deviceX = -1, deviceY = -1;
 
     private WifiManager wifiManager;
-
     private NetworkStateManager networkStateManager;
     private boolean isOfflineMode = false;
-    private int currentFloor = 1; // Default floor
+    private boolean isFloorInitialized = false;
 
     private FusedLocationProviderClient fusedLocationClient;
     private LocationCallback locationCallback;
@@ -123,48 +122,23 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
     private int initialFloor = -1;
 
     private AppState appState;
-    private boolean isFloorInitialized = false;
     // Wi-Fi board positions (waste bin markers) retrieved from Firebase
     private FirebaseHelper.WifiPosition board1;
     // Access point coordinates (for device position calculation)
     private int apX, apY;
-    private AlertDialog networkDialog;
+
     // Selected waste bin (Wi-Fi board) coordinates and floor
     private int selectedBinX = -1, selectedBinY = -1, selectedBinFloor = -1;
     private int lastSelectedBinX = -1, lastSelectedBinY = -1, lastSelectedBinFloor = -1;
-    private boolean isSwitchingFloor = false;
-    // Device's floor (retrieved from altitude and RSSI)
+    private AlertDialog networkDialog;
+    // Device floor (determined from altitude and RSSI)
     private int deviceFloor = -1;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        handleNetworkState();
-    }
-
-    private void handleNetworkState() {
-        if (appState.isOfflineMode()) {
-            isOfflineMode = true;
-            mapView.clearPaths();
-            stairsMap.clear();
-            currentFloor = 1;
-            floorSpinner.setSelection(currentFloor - 1);
-            updateFloor();
-            Log.d(TAG, "Offline mode activated. Ground floor set as default.");
-            return;
-        }
-        boolean isWifiConnected = networkStateManager.isWifiConnected();
-        boolean isInternetAccessible = networkStateManager.isInternetAccessible();
-        if (isWifiConnected && isInternetAccessible) {
-            dismissNetworkDialog();
-            isOfflineMode = false;
-            updateFloor();
-        } else if (!isWifiConnected) {
-            showSwitchToWifiDialog();
-        } else if (isWifiConnected && !isInternetAccessible) {
-            showNoInternetDialog();
-        }
-    }
+    private boolean isSwitchingFloor = false;
+    // Global caches for multi-floor navigation segments:
+    private List<int[]> multiFloorPathToStair = null;
+    private List<int[]> multiFloorPathFromStair = null;
+    private int[] cachedStairCoordinates = null;
+    private int cachedGoalFloor = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -186,10 +160,12 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         firebaseHelper = new FirebaseHelper();
 
         btnBack.setOnClickListener(v -> finish());
+
         btnBin.setOnClickListener(v -> {
             btnBin.setBackgroundColor(Color.parseColor("#388E3C"));
             openWasteDisposalSuccessActivity();
         });
+
         btnGoBack.setOnClickListener(v -> {
             modalBox.setVisibility(View.GONE);
             floorSpinner.setVisibility(View.VISIBLE);
@@ -202,7 +178,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
             lastSelectedBinX = -1;
             lastSelectedBinY = -1;
             lastSelectedBinFloor = -1;
-            stairsMap.clear();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             Log.d(TAG, "Go Back clicked. Navigation paths cleared.");
         });
 
@@ -217,10 +196,17 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         networkStateManager.getInternetAccessible().observe(this, isInternetAccessible -> handleNetworkState());
         handleNetworkState();
 
-        // Retrieve Wi‑Fi board positions from Firebase and add as markers/stairs
+        // Retrieve Wi-Fi board positions from Firebase (if needed)
         fetchWifiBoardPositions();
+
         // Load floor maps from assets (e.g., floor1.json, floor2.json, floor3.json)
         initializeFloors();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        handleNetworkState();
     }
 
     private void showSwitchToWifiDialog() {
@@ -237,7 +223,6 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                     isOfflineMode = true;
                     dismissNetworkDialog();
                     mapView.clearPaths();
-                    stairsMap.clear();
                     currentFloor = 1;
                     floorSpinner.setSelection(currentFloor - 1);
                     updateFloor();
@@ -245,14 +230,6 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                 })
                 .setNeutralButton("Open Wi-Fi Settings", (dialog, which) -> startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)))
                 .show();
-    }
-
-    private void dismissNetworkDialog() {
-        if (networkDialog != null && networkDialog.isShowing()) {
-            networkDialog.dismiss();
-            networkDialog = null;
-            Log.d(TAG, "Network dialog dismissed.");
-        }
     }
 
     private void showNoInternetDialog() {
@@ -269,7 +246,6 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                     isOfflineMode = true;
                     dismissNetworkDialog();
                     mapView.clearPaths();
-                    stairsMap.clear();
                     currentFloor = 1;
                     floorSpinner.setSelection(currentFloor - 1);
                     updateFloor();
@@ -277,6 +253,29 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                 })
                 .setNeutralButton("Open Wi-Fi Settings", (dialog, which) -> startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)))
                 .show();
+    }
+
+    private void handleNetworkState() {
+        if (appState.isOfflineMode()) {
+            isOfflineMode = true;
+            mapView.clearPaths();
+            currentFloor = 1;
+            floorSpinner.setSelection(currentFloor - 1);
+            updateFloor();
+            Log.d(TAG, "Offline mode activated. Ground floor set as default.");
+            return;
+        }
+        boolean isWifiConnected = networkStateManager.isWifiConnected();
+        boolean isInternetAccessible = networkStateManager.isInternetAccessible();
+        if (isWifiConnected && isInternetAccessible) {
+            dismissNetworkDialog();
+            isOfflineMode = false;
+            updateFloor();
+        } else if (!isWifiConnected) {
+            showSwitchToWifiDialog();
+        } else if (isWifiConnected && !isInternetAccessible) {
+            showNoInternetDialog();
+        }
     }
 
     private void setupFloorSpinner() {
@@ -330,33 +329,12 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         }
     }
 
-    private void addStairsToStairsMap(FirebaseHelper.WifiPosition board) {
-        if (stairsMap.containsKey(board.floor)) {
-            stairsMap.get(board.floor).add(new int[]{board.x, board.y});
-        } else {
-            List<int[]> stairs = new ArrayList<>();
-            stairs.add(new int[]{board.x, board.y});
-            stairsMap.put(board.floor, stairs);
+    private void dismissNetworkDialog() {
+        if (networkDialog != null && networkDialog.isShowing()) {
+            networkDialog.dismiss();
+            networkDialog = null;
+            Log.d(TAG, "Network dialog dismissed.");
         }
-    }
-
-    private void fetchWifiBoardPositions() {
-        firebaseHelper.listenForWifiBoardPositions((board1, board2) -> {
-            if (board1 != null && board2 != null) {
-                this.board1 = board1;
-                this.board2 = board2;
-                addStairsToStairsMap(board1);
-                addStairsToStairsMap(board2);
-                showMarkersForCurrentFloor();
-                checkInitialDataLoaded();
-                Log.d(TAG, "Wi‑Fi board positions fetched: Board1(" + board1.x + ", " + board1.y +
-                        "), Board2(" + board2.x + ", " + board2.y + ")");
-            } else {
-                showMarkersForCurrentFloor();
-                checkInitialDataLoaded();
-                Log.w(TAG, "One or both Wi‑Fi board positions are null.");
-            }
-        });
     }
 
     private void showMarkersForCurrentFloor() {
@@ -384,6 +362,24 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         } else {
             Log.e(TAG, "SensorManager not available.");
         }
+    }
+
+    private void fetchWifiBoardPositions() {
+        firebaseHelper.listenForWifiBoardPositions((board1, board2) -> {
+            if (board1 != null && board2 != null) {
+                this.board1 = board1;
+                this.board2 = board2;
+                // (Stairs are now extracted from JSON maps; no need to cache from Firebase.)
+                showMarkersForCurrentFloor();
+                checkInitialDataLoaded();
+                Log.d(TAG, "Wi‑Fi board positions fetched: Board1(" + board1.x + ", " + board1.y +
+                        "), Board2(" + board2.x + ", " + board2.y + ")");
+            } else {
+                showMarkersForCurrentFloor();
+                checkInitialDataLoaded();
+                Log.w(TAG, "One or both Wi‑Fi board positions are null.");
+            }
+        });
     }
 
     private void initLocationManager() {
@@ -522,9 +518,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         } else {
             mapView.removeDeviceMarker();
             mapView.clearPaths();
-            stairsMap.clear();
-            Log.d(TAG, "Offline mode or floor mismatch: device marker removed and paths cleared.");
+            Log.d(TAG, "Offline mode or deviceFloor mismatch. Device marker removed and paths cleared.");
         }
+        // Update navigation path display based on cached multi-floor segments.
+        updateNavigationPathDisplay();
         Log.d(TAG, "Floor updated to " + currentFloor);
     }
 
@@ -533,22 +530,15 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
             Log.w(TAG, "Map grid is not initialized.");
             return;
         }
-
         double distance = getDistanceFromRssi(rssi);
-        int cellsAway = (int) Math.round(distance / 0.5); // Adjust scaling factor as needed
-
+        int cellsAway = (int) Math.round(distance / 0.5);
         double angleRad = Math.toRadians(lastAzimuth);
         int deltaX = (int) Math.round(cellsAway * Math.sin(angleRad));
         int deltaY = (int) Math.round(cellsAway * Math.cos(angleRad));
-
         int newDeviceX = apX + deltaX;
         int newDeviceY = apY - deltaY;
-
-        // Clamp to map boundaries
         newDeviceX = Math.max(0, Math.min(newDeviceX, mapGrid[0].length - 1));
         newDeviceY = Math.max(0, Math.min(newDeviceY, mapGrid.length - 1));
-
-        // Use pathfinder.isWalkable(...) to check walkability
         if (pathfinder.isWalkable(mapGrid, newDeviceX, newDeviceY)) {
             deviceX = newDeviceX;
             deviceY = newDeviceY;
@@ -560,14 +550,13 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                 deviceX = closestWalkable[0];
                 deviceY = closestWalkable[1];
                 mapView.addDeviceMarkerPosition(deviceX, deviceY);
-                Log.d(TAG, "Device marker moved to closest walkable position (" + deviceX + ", " + deviceY + ") on floor " + deviceFloor);
+                Log.d(TAG, "Device marker moved to closest walkable (" + deviceX + ", " + deviceY + ") on floor " + deviceFloor);
             } else {
                 Toast.makeText(this, "No walkable path found near device location.", Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "No walkable path found near device location.");
             }
         }
     }
-
 
     private double getDistanceFromRssi(int rssi) {
         int txPower = -59;
@@ -577,17 +566,15 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
 
     private int[] findClosestWalkablePosition(int x, int y) {
         int maxDistance = Math.max(mapGrid.length, mapGrid[0].length);
-
         for (int distance = 1; distance <= maxDistance; distance++) {
             for (int dx = -distance; dx <= distance; dx++) {
                 for (int dy = -distance; dy <= distance; dy++) {
                     int newX = x + dx;
                     int newY = y + dy;
-                    if (newX < 0 || newY < 0 || newX >= mapGrid[0].length || newY >= mapGrid.length) {
+                    if (newX < 0 || newY < 0 || newX >= mapGrid[0].length || newY >= mapGrid.length)
                         continue;
-                    }
                     if (pathfinder.isWalkable(mapGrid, newX, newY)) {
-                        Log.d(TAG, "Closest walkable position found at (" + newX + ", " + newY + ") on floor " + deviceFloor);
+                        Log.d(TAG, "Closest walkable found at (" + newX + ", " + newY + ") on floor " + deviceFloor);
                         return new int[]{newX, newY};
                     }
                 }
@@ -596,8 +583,6 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         return null;
     }
 
-
-    // When a marker (waste bin) is clicked
     @Override
     public void onMarkerClick(int x, int y) {
         if (x == -1 && y == -1) {
@@ -612,8 +597,11 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
             lastSelectedBinX = -1;
             lastSelectedBinY = -1;
             lastSelectedBinFloor = -1;
-            stairsMap.clear();
-            Log.d(TAG, "Waste bin deselected. Paths cleared.");
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
+            Log.d(TAG, "Waste bin deselected. Navigation paths cleared.");
         } else {
             modalBox.setVisibility(View.VISIBLE);
             floorSpinner.setVisibility(View.VISIBLE);
@@ -637,6 +625,7 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                     lastSelectedBinX = selectedBinX;
                     lastSelectedBinY = selectedBinY;
                     lastSelectedBinFloor = selectedBinFloor;
+                    // Compute multi-floor path from device location to selected waste bin.
                     handlePathfinding(deviceX, deviceY, selectedBinX, selectedBinY, selectedBinFloor);
                     Log.d(TAG, "Waste bin selected: " + binName + " at (" + x + ", " + y + ") on floor " + binFloor);
                 } else {
@@ -650,20 +639,23 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         }
     }
 
-    // Uses the multi-floor A* pathfinding to compute and draw a navigation path.
+    // Multi-floor pathfinding: computes paths on the device floor (user-to-stair) and on the goal floor (stair-to-goal)
+    // and caches these segments so that when switching floors, the correct navigation line is displayed.
     private void handlePathfinding(int startX, int startY, int goalX, int goalY, int goalFloor) {
-        // Prevent drawing if user location is invalid.
+        // If invalid start point, do nothing.
         if (startX < 0 || startY < 0) {
             Toast.makeText(this, "User location not available.", Toast.LENGTH_SHORT).show();
             mapView.clearPaths();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             return;
         }
-
-        // Clear existing navigation paths.
         mapView.clearPaths();
         Log.d(TAG, "Cleared existing paths before pathfinding.");
 
-        // If user and waste bin are on the same floor, perform standard A*.
+        // If same-floor, perform standard A*.
         if (deviceFloor == goalFloor) {
             AStarPathfinding.AStarResult result = pathfinder.aStar(floorMaps.get(goalFloor), startX, startY, goalX, goalY);
             if (result != null && result.path != null) {
@@ -672,6 +664,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
                     path.add(new int[]{node.x, node.y});
                 }
                 mapView.setPath(path);
+                multiFloorPathToStair = null;
+                multiFloorPathFromStair = null;
+                cachedStairCoordinates = null;
+                cachedGoalFloor = -1;
                 Log.d(TAG, "Single-floor path drawn on floor " + goalFloor);
             } else {
                 mapView.clearPaths();
@@ -682,12 +678,16 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         }
 
         // Multi-floor navigation:
-        // Compute path on the user's floor from user location to nearest stair.
-        List<int[]> startStairs = AStarPathfindingHelper.getStairsFromGrid(floorMaps.get(deviceFloor));
+        // 1. On the user's (device) floor: extract stairs from JSON map.
+        List<int[]> startStairs = pathfinder.getStairsFromGrid(floorMaps.get(deviceFloor));
         int[] nearestStair = pathfinder.findNearestStair(deviceFloor, floorMaps.get(deviceFloor), startX, startY, startStairs);
         if (nearestStair == null) {
             Toast.makeText(this, "No stairs found on your floor.", Toast.LENGTH_SHORT).show();
             mapView.clearPaths();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             Log.w(TAG, "No stairs found on device floor: " + deviceFloor);
             return;
         }
@@ -695,6 +695,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         if (resultToStair == null || resultToStair.path == null) {
             Toast.makeText(this, "No path to stairs found on your floor.", Toast.LENGTH_SHORT).show();
             mapView.clearPaths();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             Log.w(TAG, "No path to stairs found on device floor.");
             return;
         }
@@ -703,9 +707,8 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
             pathToStair.add(new int[]{node.x, node.y});
         }
 
-        // Compute path on the goal floor from the corresponding stair to the waste bin.
-        // Extract stairs from the goal floor.
-        List<int[]> goalStairs = AStarPathfindingHelper.getStairsFromGrid(floorMaps.get(goalFloor));
+        // 2. On the goal floor: extract stairs from JSON map.
+        List<int[]> goalStairs = pathfinder.getStairsFromGrid(floorMaps.get(goalFloor));
         boolean stairExists = false;
         for (int[] stair : goalStairs) {
             if (stair[0] == nearestStair[0] && stair[1] == nearestStair[1]) {
@@ -716,6 +719,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         if (!stairExists) {
             Toast.makeText(this, "Corresponding stair not found on target floor.", Toast.LENGTH_SHORT).show();
             mapView.clearPaths();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             Log.w(TAG, "Stair (" + nearestStair[0] + "," + nearestStair[1] + ") not found on goal floor " + goalFloor);
             return;
         }
@@ -723,6 +730,10 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
         if (resultFromStair == null || resultFromStair.path == null) {
             Toast.makeText(this, "No path from stairs to waste bin found on target floor.", Toast.LENGTH_SHORT).show();
             mapView.clearPaths();
+            multiFloorPathToStair = null;
+            multiFloorPathFromStair = null;
+            cachedStairCoordinates = null;
+            cachedGoalFloor = -1;
             Log.w(TAG, "No path from stairs to goal on goal floor.");
             return;
         }
@@ -731,18 +742,27 @@ public class NavigationMapActivity extends AppCompatActivity implements MapGridV
             pathFromStair.add(new int[]{node.x, node.y});
         }
 
-        // Depending on which floor is currently displayed, draw only the relevant segment.
-        if (currentFloor == deviceFloor) {
-            // On user's floor: draw path from user to nearest stair.
-            mapView.setPath(pathToStair);
-            Log.d(TAG, "Drawing path from user to stairs on floor " + deviceFloor);
-        } else if (currentFloor == goalFloor) {
-            // On target floor: draw path from the stair (as start) to the waste bin.
-            mapView.setPath(pathFromStair);
-            Log.d(TAG, "Drawing path from stairs to waste bin on floor " + goalFloor);
+        // Cache the computed segments and stair coordinate.
+        multiFloorPathToStair = pathToStair;
+        multiFloorPathFromStair = pathFromStair;
+        cachedStairCoordinates = nearestStair;
+        cachedGoalFloor = goalFloor;
+
+        // Update navigation display based on current floor.
+        updateNavigationPathDisplay();
+    }
+
+    // Updates the displayed navigation path based on the current floor.
+    private void updateNavigationPathDisplay() {
+        if (currentFloor == deviceFloor && multiFloorPathToStair != null) {
+            mapView.setPath(multiFloorPathToStair);
+            Log.d(TAG, "Displaying path from user to stairs on floor " + deviceFloor);
+        } else if (currentFloor == cachedGoalFloor && multiFloorPathFromStair != null) {
+            mapView.setPath(multiFloorPathFromStair);
+            Log.d(TAG, "Displaying path from stairs to waste bin on floor " + cachedGoalFloor);
         } else {
             mapView.clearPaths();
-            Log.d(TAG, "Current floor (" + currentFloor + ") is neither device floor (" + deviceFloor + ") nor goal floor (" + goalFloor + "). No navigation line drawn.");
+            Log.d(TAG, "Current floor (" + currentFloor + ") not in multi-floor navigation. No path displayed.");
         }
     }
 
